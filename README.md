@@ -1,11 +1,12 @@
 # Version checker
 
-Tools to check a remote website version based on local git repository
-This tool will help you to find the website version of the opensource project in use based on statics files like js,css,xml...
+Tool to check a remote website version based on local git repository
+This tool will help you to find the website version of the opensource project in use based on static files like js,css,xml...
 
-[![asciicast](img/result.png)](https://asciinema.org/a/WYD8WtfnULpbfkz5uKMmqLExF)
+[![asciicast](result.png)](https://asciinema.org/a/WYD8WtfnULpbfkz5uKMmqLExF)
 
 ## Install
+
 ```
 python3 -m pip install -r requirements.txt
 ```
