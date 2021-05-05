@@ -140,7 +140,7 @@ class VersionChecker:
         exit if the response code is not 200
         :return: response text
         """
-        r = requests.get(self.url, proxies=self.proxy)
+        r = requests.get(self.url, proxies=self.proxy, verify=False)
         if r.status_code != 200:
             print('[red] url status code %i is not 200 exit [/red]' % r.status_code)
             sys.exit(1)
@@ -161,7 +161,7 @@ class VersionChecker:
         """
         file_list = []
         for file in self.files:
-            r = requests.get(self.url + file, proxies=self.proxy)
+            r = requests.get(self.url + file, proxies=self.proxy, verify=False)
             if r.status_code == 200:
                 print('[green] [+] file %s found on server [/green]' % file)
                 file_list.append((file, r.text))
