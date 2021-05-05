@@ -6,6 +6,9 @@ import requests
 import os
 import sys
 from rich import print
+from rich.progress import Progress
+from rich.table import Table
+from rich.console import Console
 from os.path import isfile
 from git import Repo
 from difflib import SequenceMatcher
@@ -32,7 +35,8 @@ def parser():
                         required=False)
 
     parser.add_argument('-t', '--tags', help="force tags to use coma separated", required=False)
-    parser.add_argument('-p', '--path', help="git repository web folder location (useful in case of public folder)", required=False)
+    parser.add_argument('-p', '--path', help="git repository web folder location (useful in case of public folder)",
+                        required=False)
     parser.add_argument('-v', '--verbose', help="Give more verbosity", action="store_true")
     parser.add_argument('-P', '--proxy', help="use proxy to launch request to url", required=False)
     return parser.parse_args()
@@ -124,8 +128,7 @@ class VersionChecker:
             else:
                 self.repo = Repo(tmp_folder)
                 return
-        if self.verbose:
-            print("[blue] [+] Cloning repo ... [/blue] ")
+        print("[blue] [+] Cloning repo please wait... [/blue] ")
         Repo.clone_from(self.git, tmp_folder)
         if self.verbose:
             print("[blue] [+] Cloned ! [/blue]")
@@ -166,6 +169,30 @@ class VersionChecker:
                 print('[yellow] [-] file %s not found on server skip [/yellow]' % file)
         return file_list
 
+    def process_tag(self, tag_name, files):
+        results = {}
+        self.repo.git.checkout(tag_name, force=True)
+        for (file, text) in files:
+            if isfile(self.repo_local_path + self.web_folder + file):
+                try:
+                    with open(self.repo_local_path + self.web_folder + file, 'r') as f:
+                        git_file = f.read().encode('utf-8')
+                    web_file = text.encode('utf-8')
+                    ratio = SequenceMatcher(None, git_file, web_file).quick_ratio()
+                    ratio *= 100.00
+                    color = color_ratio(ratio)
+                    results[file] = ratio
+                    ratio = '[' + color + '] ' + str(ratio) + '[/' + color + ']'
+                    if self.verbose:
+                        print('[green] %s ratio for file %s is %s[/green]' % (tag_name, file, ratio))
+                except UnicodeDecodeError:
+                    results[file] = -1
+            else:
+                if self.verbose:
+                    print('[red] file %s not found [/red]' % file)
+                results[file] = -1
+        return results
+
     def check_diff(self, tags, files):
         """
         Check the difference between the file on remote and on git tag
@@ -174,32 +201,17 @@ class VersionChecker:
         :return: result dict format : result[tag][file]=ratio
         """
         results = {}
-        for tag_name in tags:
-            results[tag_name] = {}
-            print('[blue] --- tag : %s  --- [/blue]' % tag_name)
-            self.repo.git.checkout(tag_name, force=True)
-            for (file, text) in files:
+        if not self.verbose:
+            with Progress() as progress:
+                task1 = progress.add_task("[cyan]checking tags...", total=len(tags))
+                for tag_name in tags:
+                    results[tag_name] = self.process_tag(tag_name, files)
+                    progress.update(task1, advance=1, description='[cyan]Checking tags :[/cyan] %15s' % tag_name)
+        else:
+            for tag_name in tags:
                 if self.verbose:
-                    print('[blue] verify file %s [/blue]' % file)
-                if isfile(self.repo_local_path + self.web_folder + file):
-                    try:
-                        if self.verbose:
-                            print('[green] File %s found on git repo [/green]' % file)
-                        with open(self.repo_local_path + self.web_folder + file, 'r') as f:
-                            git_file = f.read().encode('utf-8')
-                        web_file = text.encode('utf-8')
-                        ratio = SequenceMatcher(None, git_file, web_file).quick_ratio()
-                        ratio *= 100.00
-                        color = color_ratio(ratio)
-                        results[tag_name][file] = ratio
-                        ratio = '[' + color + '] ' + str(ratio) + '[/' + color + ']'
-                        print('[green] %s ratio for file %s is %s[/green]' % (tag_name, file, ratio))
-                    except UnicodeDecodeError:
-                        results[tag_name][file] = -1
-                else:
-                    if self.verbose:
-                        print('[red] file not found [/red]')
-                    results[tag_name][file] = -1
+                    print('[blue] --- tag : %s  --- [/blue]' % tag_name)
+                    results[tag_name] = self.process_tag(tag_name, files)
         return results
 
     def compile_tags_ratio(self, results):
@@ -314,7 +326,13 @@ class VersionChecker:
             r = '[' + color + '] ' + str(ratio) + '[/' + color + ']'
             print('file %s : %s (%s)' % (file, tag, r))
 
+        console = Console()
         print('\n[blue] --- RESULTS by tags --- [/blue]')
+        table = Table(show_header=True, header_style="bold magenta")
+        table.add_column("Tag")
+        table.add_column("Ratio on checked files")
+        table.add_column("Ratio on all files")
+        table.add_column("Number of best choice on %i files" % nb_files)
         for tag, nb_file_best in sorted(tags_nb_best_match.items()):
             tag_ratio_checked = tags_ratio_checked[tag]
             tag_ratio_total = tags_ratio_total[tag]
@@ -323,11 +341,11 @@ class VersionChecker:
             ratio_total = '[' + color_ratio(tag_ratio_total) + '] ' + str(tag_ratio_total) + '[/' + color_ratio(
                 tag_ratio_total) + ']'
             if tag in best_tags:
-                print('[green]%10s : %s of checked %s on total, best choice on %i/%i[/green]' % (
-                    tag, ratio_checked, ratio_total, nb_file_best, nb_files))
+                table.add_row('[green]' + tag + '[/green]', ratio_checked, ratio_total,
+                              '[green]' + str(nb_file_best) + '[/green]')
             else:
-                print('[blue]%10s : %s of checked %s on total, best choice on %i/%i[/blue]' % (
-                    tag, ratio_checked, ratio_total, nb_file_best, nb_files))
+                table.add_row(tag, ratio_checked, ratio_total, str(nb_file_best))
+        console.print(table)
 
     def init_git_repository(self):
         """
@@ -370,8 +388,9 @@ class VersionChecker:
         else:
             tags = [tag.name for tag in self.repo.tags]
 
-        print('[blue] --- tag list --- [/blue]')
-        print("[green]" + ", ".join(tags) + "[/green]")
+        if self.verbose:
+            print('[blue] --- tag list --- [/blue]')
+            print("[green]" + ", ".join(tags) + "[/green]")
         return tags
 
     def execute(self):
