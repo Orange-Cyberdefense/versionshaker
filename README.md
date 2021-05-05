@@ -3,7 +3,7 @@
 Tools to check a remote website version based on local git repository
 This tool will help you to find the website version of the opensource project in use based on statics files like js,css,xml...
 
-![](img/result.png)
+[![asciicast](img/result.png)](https://asciinema.org/a/WYD8WtfnULpbfkz5uKMmqLExF)
 
 ## Install
 ```
