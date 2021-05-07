@@ -1,7 +1,12 @@
 # versionshaker
 
-Versionshaker is a tool to check a remote website version based on local git repository
-This tool will help you to find the website version of the opensource project in use based on static files like js,css,xml...
+Versionshaker is a tool to find a remote website version based on a git repository
+This tool will help you to find the website version of the github project in use based on static files like js,css,xml...
+
+To use this tool you will need :
+- Identify the git repository to use based on usual fingerprint (wordpress/joomla/magento/prestashop/drupal/...)
+- Identify the interesting statics files (js, css, xml, ...) 
+- run with : `python3 versionshaker.py -c <git_repo_url> -u <website_to_test> -f <files_to_check>`
 
 [![asciicast](result.png)](https://asciinema.org/a/WYD8WtfnULpbfkz5uKMmqLExF)
 
