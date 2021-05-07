@@ -10,7 +10,7 @@ To use this tool you will need :
 
 [![asciicast](result.png)](https://asciinema.org/a/WYD8WtfnULpbfkz5uKMmqLExF)
 
-## Install
+## Install
 
 ```
 python3 -m pip install -r requirements.txt
