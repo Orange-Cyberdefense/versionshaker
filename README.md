@@ -1,6 +1,6 @@
-# Version checker
+# versionshaker
 
-Tool to check a remote website version based on local git repository
+Versionshaker is a tool to check a remote website version based on local git repository
 This tool will help you to find the website version of the opensource project in use based on static files like js,css,xml...
 
 [![asciicast](result.png)](https://asciinema.org/a/WYD8WtfnULpbfkz5uKMmqLExF)
@@ -24,6 +24,5 @@ You can run the project with the following options :
 
 Example : 
 ```
-python3 version_checker.py -c https://github.com/WordPress/WordPress -u https://wordpress.website.example/ -f wp-includes/css/dist/block-library/style.min.css,wp-includes/js/jquery/jquery.min.js
+python3 versionshaker.py -c https://github.com/WordPress/WordPress -u https://wordpress.website.example/ -f wp-includes/css/dist/block-library/style.min.css,wp-includes/js/jquery/jquery.min.js
 ```
-
