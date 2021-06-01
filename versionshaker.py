@@ -83,6 +83,8 @@ class VersionChecker:
         self.repo_local_path = '.tmp/'
         if web_folder is None:
             self.web_folder = ''
+        else:
+            self.web_folder = web_folder
         if self.web_folder != '':
             if self.web_folder[-1:] != '/':
                 self.web_folder += '/'
